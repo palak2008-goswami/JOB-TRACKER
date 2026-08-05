@@ -1,0 +1,755 @@
+{
+  "name": "JobTracker",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Career and Livelihood Information",
+        "formDescription": "Enter your information",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Education Level (pursued/pursuing)",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "10th"
+                  },
+                  {
+                    "option": "12th"
+                  },
+                  {
+                    "option": "Diploma"
+                  },
+                  {
+                    "option": "UnderGraduate"
+                  },
+                  {
+                    "option": "PostGraduate"
+                  },
+                  {
+                    "option": "Certificate"
+                  },
+                  {
+                    "option": "Others"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Skills",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Years of Experience",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Location",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Career Interest",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -320,
+        -256
+      ],
+      "id": "e47b02b3-2030-4c10-9bc7-2dd47dcc2380",
+      "name": "On form submission",
+      "webhookId": "99d17597-7b6b-4bc3-af6d-25aaa36fd875"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Shreya\",\n  \"education_level\": \"UnderGraduate\",\n  \"skills\": [\"Python\"],\n  \"experience_years\": 1,\n  \"location\": \"Home\",\n  \"interest_area\": \"Art\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        -432
+      ],
+      "id": "172f9580-130f-4de9-bcc7-4c7152b02a16",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        640,
+        -448
+      ],
+      "id": "f3f1a15e-c5e7-484e-b25c-cad782daff30",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Structure the following user profile into clean JSON.\n\nFull Name: {{ $json['Full name'] }}\nEducation Level: {{ $json['Education Level (pursued/pursuing)'] }}\nSkills: {{ $json['Skills'] }}\nYears of Experience: {{ $json['Years of Experience'] }}\nLocation: {{ $json['Location'] }}\nCareer Interest: {{ $json['Career Interest'] }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a profile structuring agent. Convert the given user information into a clean JSON object with exactly these fields: - name (string) - education_level (string) - skills (array of strings, split from comma-separated input) - experience_years (number) - location (string) - interest_area (string)  Return ONLY the JSON object. No explanation, no markdown code fences, no extra text."
+            },
+            {
+              "message": "CRITICAL OUTPUT RULES: 1. Return raw JSON ONLY that strictly matches the parser schema. 2. Do NOT wrap the JSON output inside markdown code blocks (do NOT use ```json or ```). 3. Do NOT use double quotes (\" \") inside the string text values—use single quotes (' ') or no quotes instead. 4. Keep the resume text as standard plain text with simple newlines (\\n)."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -64,
+        -256
+      ],
+      "id": "34834e77-e888-4732-b346-2648ad7a8ae9",
+      "name": "Profile Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this user profile and provide career insights.\n\nProfile:\nName: {{ $json.output.name }}\nEducation: {{ $json.output.education_level }}\nSkills: {{ $json.output.skills }}\nExperience: {{ $json.output.experience_years }} years\nLocation: {{ $json.output.location }}\nCareer Interest: {{ $json.output.interest_area }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a career analysis agent working across ALL sectors of employment — including agriculture, construction, skilled trades, handicrafts, domestic work, retail, transport, education, healthcare, and office/IT jobs. Do not assume the person is looking for an office or IT job unless their profile clearly indicates that.  Based on the given profile, identify: - strengths: array of 2-4 short strings describing this person's strong points, relevant to any sector including informal/manual work - skill_gaps: array of 2-4 short strings describing skills they should develop for their stated career interest - suitable_job_categories: array of 2-4 job category names that genuinely fit this profile's education, skills, and experience — these can include Agriculture, Construction, Arts & Crafts, Domestic Service, Retail, Transport, Education, Healthcare, IT, or any other relevant sector  Return ONLY a JSON object with these three fields. No explanation, no markdown, no extra text."
+            },
+            {
+              "message": "CRITICAL OUTPUT RULES: 1. Return raw JSON ONLY that strictly matches the parser schema. 2. Do NOT wrap the JSON output inside markdown code blocks (do NOT use ```json or ```). 3. Do NOT use double quotes (\" \") inside the string text values—use single quotes (' ') or no quotes instead. 4. Keep the resume text as standard plain text with simple newlines (\\n).5. Inside the full_resume and cover_letter string values, use \\n for line breaks — never insert literal newlines. Ensure the final output is valid, parseable JSON with all quotes properly escaped."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        448,
+        -256
+      ],
+      "id": "605990c3-14a3-4003-8425-38b17387edad",
+      "name": "Analysis Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $('Profile Agent').first().json }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -256
+      ],
+      "id": "fecfb5f1-cd3b-4703-916c-d717be26bbc9",
+      "name": "debug node 1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: $('Profile Agent').first().json\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -256
+      ],
+      "id": "9d05570e-f630-46e8-9c4f-21a976df2c6e",
+      "name": "debug node 2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Comprehensive Curated Schemes Dataset\nconst schemes = [\n  // --- Employment, Education & Research ---\n  {\n    name: \"National Career Service (NCS) Scheme\",\n    category: \"Employment & Research\",\n    minEducation: \"Diploma\",\n    targetSkills: [\"History\", \"Research\", \"Teaching\", \"Communication\", \"Admin\"],\n    description: \"Provides job matching, career counseling, and fellowship guidance for researchers and graduates.\"\n  },\n  {\n    name: \"Pandit Madan Mohan Malaviya National Mission on Teachers and Teaching\",\n    category: \"Education\",\n    minEducation: \"Degree\",\n    targetSkills: [\"Teaching\", \"Education\", \"Communication\", \"Mentoring\", \"History\"],\n    description: \"Focuses on capacity building and professional development for educators and teaching assistants.\"\n  },\n\n  // --- Agriculture ---\n  {\n    name: \"Rashtriya Krishi Vikas Yojana (RKVY)\",\n    category: \"Agriculture\",\n    minEducation: \"Any\",\n    targetSkills: [\"Farming\", \"Agriculture\", \"Animal care\", \"Physical labor\", \"Crop management\"],\n    description: \"Supports farming practices, agri-entrepreneurship, and skill development in the allied agriculture sector.\"\n  },\n\n  // --- Construction & Labour ---\n  {\n    name: \"BOCW (Building and Other Construction Workers) Welfare Scheme\",\n    category: \"Construction & Labour\",\n    minEducation: \"Any\",\n    targetSkills: [\"Physical labor\", \"Basic tools\", \"Masonry\", \"Construction\"],\n    description: \"Provides financial assistance, health coverage, tool kits, and skill upgrades for construction workers.\"\n  },\n\n  // --- Arts & Handicrafts ---\n  {\n    name: \"Ambedkar Hastshilp Vikas Yojana\",\n    category: \"Arts & Handicrafts\",\n    minEducation: \"Any\",\n    targetSkills: [\"Handicrafts\", \"Weaving\", \"Arts & Crafts\", \"Painting\", \"Art\", \"Tailoring\", \"Stitching\"],\n    description: \"Empowers artisans through skill enhancement, design interventions, tool kits, and market linkages.\"\n  },\n\n  // --- Domestic Service & Unorganized Labour ---\n  {\n    name: \"PM Shram Yogi Maandhan (PM-SYM)\",\n    category: \"Domestic Service\",\n    minEducation: \"Any\",\n    targetSkills: [\"Housekeeping\", \"Cooking\", \"Food prep\", \"Driving\", \"Domestic Service\"],\n    description: \"A voluntary and contributory pension scheme for unorganized workers, including domestic helpers, drivers, and street vendors.\"\n  },\n\n  // --- Small Business / Retail ---\n  {\n    name: \"Pradhan Mantri Mudra Yojana (PMMY)\",\n    category: \"Small Business\",\n    minEducation: \"Any\",\n    targetSkills: [\"Sales\", \"Retail\", \"Communication\", \"Basic math\", \"Tailoring\", \"Arts & Crafts\"],\n    description: \"Provides micro-credit and non-collateral loans to non-corporate, non-farm small/micro enterprises to start or expand businesses.\"\n  },\n\n  // --- IT & Computer Science ---\n  {\n    name: \"FutureSkills Prime (MeitY & NASSCOM)\",\n    category: \"IT & CS\",\n    minEducation: \"Diploma\",\n    targetSkills: [\"Basic Computer\", \"Programming\", \"IT Support\", \"Networking basics\", \"Data Entry\", \"MS Excel\"],\n    description: \"A digital skilling platform offering certifications in emerging technologies and professional IT skills.\"\n  },\n\n  // --- Engineering Sector ---\n  {\n    name: \"National Apprenticeship Training Scheme (NATS)\",\n    category: \"Engineering & Technical\",\n    minEducation: \"Diploma\",\n    targetSkills: [\"Engineering\", \"Manufacturing\", \"Machine operation\", \"Technical maintenance\"],\n    description: \"A one-year program equipping technically qualified youth with practical knowledge and skills required in their field of work.\"\n  },\n\n  // --- Health Sector ---\n  {\n    name: \"Ayushman Bharat Skill Development Initiative\",\n    category: \"Healthcare\",\n    minEducation: \"10th Pass\",\n    targetSkills: [\"Basic health knowledge\", \"Caregiving\", \"First Aid\", \"Communication\"],\n    description: \"Training programs to create skilled frontline health workers, patient care assistants, and support staff.\"\n  },\n  \n  // --- General Skill Development ---\n  {\n    name: \"PMKVY (Pradhan Mantri Kaushal Vikas Yojana)\",\n    category: \"Skill Development\",\n    minEducation: \"Any\",\n    targetSkills: [\"Physical labor\", \"Basic tools\", \"Tailoring\", \"Basic Computer\", \"Retail\", \"Food prep\"],\n    description: \"Free industry-relevant skill training and certification across various sectors to enable better livelihoods.\"\n  }\n];\n// 2. Extract profile data from previous nodes\nconst profile = $('Profile Agent').first().json.output || $('Profile Agent').first().json;\nconst userSkills = profile.skills || [];\nconst userEducation = profile.education_level || \"Any\";\n\n// 3. Match & Score Schemes\nconst scoredSchemes = schemes.map(scheme => {\n  let score = 0;\n\n  // Check if any user skill matches the target skills of the scheme\n  const skillMatch = scheme.targetSkills.some(targetSkill =>\n    userSkills.some(userSkill => userSkill.toLowerCase().includes(targetSkill.toLowerCase()))\n  );\n\n  if (skillMatch) score += 2;\n\n  // Check education level\n  if (scheme.minEducation === \"Any\" || userEducation.toLowerCase().includes(scheme.minEducation.toLowerCase())) {\n    score += 1;\n  }\n\n  return {\n    ...scheme,\n    matchScore: score\n  };\n});\n\n// 4. Sort and return top 3 schemes\nconst topSchemes = scoredSchemes\n  .sort((a, b) => b.matchScore - a.matchScore)\n  .slice(0, 3);\n\nreturn topSchemes.map(scheme => ({ json: scheme }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        -256
+      ],
+      "id": "f6d12250-b7db-46c8-9af0-951020c11e45",
+      "name": "Scheme match agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Comprehensive Curated Courses Dataset\nconst courses = [\n  // --- Education, History & Research ---\n  {\n    courseName: \"History of Indian Science and Technology\",\n    platform: \"NPTEL\",\n    category: \"Education & Research\",\n    targetSkills: [\"History\", \"Research\", \"Analytical Thinking\"],\n    description: \"Explores the evolution of science and technology in the Indian subcontinent, ideal for researchers and historians.\"\n  },\n  {\n    courseName: \"Academic Writing and Research\",\n    platform: \"SWAYAM\",\n    category: \"Education & Research\",\n    targetSkills: [\"Research\", \"Writing\", \"Teaching\", \"History\"],\n    description: \"Develops foundational research and academic writing skills for higher education roles.\"\n  },\n\n  // --- Agriculture ---\n  {\n    courseName: \"Organic Farming for Sustainable Agriculture\",\n    platform: \"NPTEL\",\n    category: \"Agriculture\",\n    targetSkills: [\"Farming\", \"Agriculture\", \"Crop management\"],\n    description: \"Learn modern organic farming techniques, soil health management, and sustainable practices.\"\n  },\n\n  // --- Construction & Labour ---\n  {\n    courseName: \"Project Planning & Control (Construction)\",\n    platform: \"NPTEL\",\n    category: \"Construction\",\n    targetSkills: [\"Masonry\", \"Construction\", \"Physical labor\", \"Basic tools\"],\n    description: \"Upskill from manual labor/masonry to site supervision and construction project management.\"\n  },\n\n  // --- Arts & Handicrafts ---\n  {\n    courseName: \"Appreciation of Indian Art and Architecture\",\n    platform: \"SWAYAM\",\n    category: \"Arts & Handicrafts\",\n    targetSkills: [\"Art\", \"Painting\", \"Handicrafts\", \"Weaving\", \"History\"],\n    description: \"Deep dive into traditional Indian art forms, adding historical context and value to handicraft creation.\"\n  },\n  {\n    courseName: \"Textile Design and Development\",\n    platform: \"Skill India / NPTEL\",\n    category: \"Arts & Handicrafts\",\n    targetSkills: [\"Tailoring\", \"Stitching\", \"Arts & Crafts\", \"Weaving\"],\n    description: \"Advanced techniques in textile weaving, natural dyeing, and pattern design.\"\n  },\n\n  // --- Domestic Service & Hospitality ---\n  {\n    courseName: \"Food and Nutrition / Food Safety\",\n    platform: \"SWAYAM\",\n    category: \"Domestic Service\",\n    targetSkills: [\"Cooking\", \"Housekeeping\", \"Food prep\", \"Hospitality\"],\n    description: \"Certification in food safety and professional nutritional cooking to upgrade to professional kitchen roles.\"\n  },\n\n  // --- Small Business / Retail ---\n  {\n    courseName: \"Entrepreneurship and IP Strategy\",\n    platform: \"NPTEL\",\n    category: \"Small Business\",\n    targetSkills: [\"Sales\", \"Retail\", \"Communication\", \"Basic math\"],\n    description: \"Learn how to scale a small business, manage finances, and build a brand.\"\n  },\n\n  // --- IT & Computer Science ---\n  {\n    courseName: \"Programming, Data Structures and Algorithms in Python\",\n    platform: \"NPTEL\",\n    category: \"IT & CS\",\n    targetSkills: [\"Basic Computer\", \"Programming\", \"IT Support\", \"Data Entry\"],\n    description: \"A foundational computer science course to transition from basic IT/Data Entry to software development.\"\n  },\n\n  // --- Engineering Sector ---\n  {\n    courseName: \"Manufacturing Process Technology\",\n    platform: \"NPTEL\",\n    category: \"Engineering\",\n    targetSkills: [\"Engineering\", \"Manufacturing\", \"Machine operation\", \"Basic tools\"],\n    description: \"Covers conventional and advanced manufacturing processes for technical and engineering roles.\"\n  },\n\n  // --- Health Sector ---\n  {\n    courseName: \"Health Research Fundamentals\",\n    platform: \"SWAYAM\",\n    category: \"Healthcare\",\n    targetSkills: [\"Basic health knowledge\", \"Caregiving\", \"First Aid\", \"Research\"],\n    description: \"Basic epidemiology and bio-statistics for healthcare workers looking to move into clinical research or administration.\"\n  }\n];\n\n// 2. Extract profile data\n// Adjust these node names if yours differ slightly\nconst profile = $('Profile Agent').first().json.output || $('Profile Agent').first().json;\nconst userSkills = profile.skills || [];\nconst interestArea = profile.interest_area || \"\"; \n\n// 3. Match & Score Courses (The \"Gap\" Logic)\nconst scoredCourses = courses.map(course => {\n  let score = 0;\n\n  // Boost score if the course aligns with their stated interest area\n  if (interestArea && course.category.toLowerCase().includes(interestArea.toLowerCase())) {\n    score += 3; \n  }\n  \n  if (interestArea && course.targetSkills.some(skill => skill.toLowerCase().includes(interestArea.toLowerCase()))) {\n    score += 2;\n  }\n\n  // Check if existing skills overlap with the course's target skills (upskilling path)\n  const skillMatch = course.targetSkills.some(targetSkill =>\n    userSkills.some(userSkill => userSkill.toLowerCase().includes(targetSkill.toLowerCase()))\n  );\n\n  if (skillMatch) score += 1;\n\n  return {\n    ...course,\n    matchScore: score\n  };\n});\n\n// 4. Sort and return top 3 recommended courses for the roadmap\nconst topCourses = scoredCourses\n  .sort((a, b) => b.matchScore - a.matchScore)\n  .slice(0, 3);\n\n// 5. Format output for n8n\nreturn topCourses.map(course => ({ json: course }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -256
+      ],
+      "id": "0c7da789-2d3c-4b38-ab1f-50858766e9bf",
+      "name": "Skill gap agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Grab candidate profile\nconst profile = $('Profile Agent').first().json.output || $('Profile Agent').first().json;\n\n// 2. Gather top results from your 3 parallel nodes\nconst topJobs = $('Job match agent').all().map(item => item.json); \nconst topSchemes = $('Scheme match agent').all().map(item => item.json);\nconst topCourses = $('Skill gap agent').all().map(item => item.json)\nconst jobMatchRaw = $('Job match agent').first().json;\n\n\n// 3. Return a single merged payload\nreturn [{\n  json: {\n    profile: profile,\n    targetJob: topJobs[0] || {}, \n    allMatchedJobs: topJobs,\n    matchedSchemes: topSchemes,\n    recommendedCourses: topCourses\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        -64
+      ],
+      "id": "77730c3a-52a2-4047-ad76-39f21194f4b0",
+      "name": "Combine agent data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Helper to safely convert plain text line breaks to HTML\nfunction textToHtml(text) {\n  if (!text) return 'N/A';\n  return text\n    // 1. Converts '### Heading' into clean <b>Heading</b> tags\n    .replace(/^###\\s*(.*$)/gim, '<b>$1</b><br>')\n    .replace(/^##\\s*(.*$)/gim, '<b>$1</b><br>')\n    .replace(/^#\\s*(.*$)/gim, '<b>$1</b><br>')\n    \n    // 2. Safely handles HTML characters and line breaks\n    .replace(/&/g, \"&amp;\")\n    .replace(/</g, \"&lt;\")\n    .replace(/>/g, \"&gt;\")\n    .replace(/\\n/g, \"<br>\");\n}\n\n// Extract data from incoming nodes\nconst combined = $('Combine agent data').first().json;\nconst rawResume = $('Resume Agent').first().json;\nconst resumeData = rawResume.output || rawResume;\n\nconst profile = combined.profile || {};\n// Safely handles output whether coming from an AI Agent or a Code Node\nconst rawJobs = combined.allMatchedJobs || $('Job match agent').first().json;\nconst jobs = Array.isArray(rawJobs) ? rawJobs : (rawJobs.output || rawJobs.jobs || []);\nconst schemes = combined.matchedSchemes || [];\nconst courses = combined.recommendedCourses || [];\n\n// Format sections cleanly using <b> tags\n\nconst jobsFormatted = jobs.map((job, index) => \n  `• <b>${index + 1}. ${job.title}</b> (${job.category || 'General'})<br>` +\n  `   - <b>Required Skills:</b> ${job.requiredSkills ? job.requiredSkills.join(', ') : 'N/A'}<br>` +\n  `   - <b>Location:</b> ${job.location || 'Any'}<br>` +\n  `   - <b>Match Score:</b> ${job.matchScore || '80'}%`\n).join('<br><br>');\n\nconst schemesFormatted = schemes.map((scheme, index) => \n  `• <b>${index + 1}. ${scheme.name}</b> (${scheme.category})<br>` +\n  `   - <b>Description:</b> ${scheme.description}<br>` +\n  `   - <b>Min Education:</b> ${scheme.minEducation}`\n).join('<br><br>');\n\nconst roadmapFormatted = courses.map((course, index) => \n  `• <b>Step ${index + 1}: ${course.courseName}</b> [${course.platform}]<br>` +\n  `   - <b>Target Skills:</b> ${course.targetSkills ? course.targetSkills.join(', ') : 'N/A'}<br>` +\n  `   - <b>Overview:</b> ${course.description}`\n).join('<br><br>');\n\n// Generate Final Clean HTML Output\nconst dashboardMarkdown = `\n<h2>Career & Upskilling Dashboard for ${profile.name || 'User'}</h2>\n<hr>\n\n<h3>Profile Snapshot</h3>\n• <b>Education:</b> ${profile.education_level || 'N/A'}<br>\n• <b>Skills:</b> ${profile.skills ? profile.skills.join(', ') : 'N/A'}<br>\n• <b>Location:</b> ${profile.location || 'N/A'}<br>\n• <b>Interest Area:</b> ${profile.interest_area || 'N/A'}<br>\n\n<hr>\n\n<h3>Top Recommended Job Matches</h3>\n${jobsFormatted || 'No matching jobs found.'}\n\n<hr>\n\n<h3>Top Eligible Government Schemes</h3>\n${schemesFormatted || 'No matching schemes found.'}\n\n<hr>\n\n<h3>Learning & Skill Gap Roadmap</h3>\n${roadmapFormatted || 'No courses recommended.'}\n\n<hr>\n\n<h3>Tailored Resume & Cover Letter</h3>\n\n<h4>Professional Summary</h4>\n${textToHtml(resumeData.resume_summary)}\n\n<hr>\n\n<h4>Generated Full Resume</h4>\n${textToHtml(resumeData.full_resume)}\n\n<hr>\n\n<h4>Generated Cover Letter</h4>\n${textToHtml(resumeData.cover_letter)}\n`;\n\nreturn [{\n  json: {\n    dashboard_markdown: dashboardMarkdown,\n    cover_letter: resumeData.cover_letter || 'N/A',\n    full_resume: resumeData.full_resume || 'N/A',\n    resume_summary: resumeData.resume_summary || 'N/A'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        144
+      ],
+      "id": "c8953b9c-6ca9-433b-b24a-39bd5c8f8e6e",
+      "name": "Generate dashboard"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Your Career Dashboard & Tailored Resume",
+        "completionMessage": "=###📝 Executive Summary\n{{ $json.resume_summary }}\n\n---\n\n###Full Resume\n{{ $json.full_resume }}\n\n---\n\n###Cover Letter\n{{ $json.cover_letter }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1712,
+        368
+      ],
+      "id": "3d8c81cd-bfb2-493e-a97d-e8031b6803de",
+      "name": "Form",
+      "webhookId": "0cd6317d-c783-4bb7-9b1b-e6a2c48fa924"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "[\n  {\n    \"title\": \"Dynamic Job Title\",\n    \"requiredSkills\": [\"Skill 1\", \"Skill 2\"],\n    \"location\": \"Location Name or Any\",\n    \"category\": \"Domain Category\",\n    \"matchScore\": 85\n  }\n]"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        -432
+      ],
+      "id": "f10932ae-8f4e-44c7-be19-3045d4b5fe21",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = [ \n// Agriculture\n{ title: \"Farm Labourer\", requiredSkills: [\"Farming\", \"Physical labor\"], location: \"Rural\", category: \"Agriculture\" }, { title: \"Dairy Farm Worker\", requiredSkills: [\"Animal care\", \"Farming\"], location: \"Rural\", category: \"Agriculture\" }, { title: \"Agricultural Supervisor\", requiredSkills: [\"Farming\", \"Team management\"], location: \"Rural\", category: \"Agriculture\" }, \n  // Construction/Labour \n  { title: \"Construction Labourer\", requiredSkills: [\"Physical labor\", \"Basic tools\"], location: \"Any\", category: \"Construction\" }, { title: \"Mason\", requiredSkills: [\"Masonry\", \"Construction\"], location: \"Any\", category: \"Construction\" }, { title: \"Electrician Helper\", requiredSkills: [\"Basic electrical\", \"Physical labor\"], location: \"Any\", category: \"Skilled Trade\" }, \n\n//Handicrafts/Arts \n  { title: \"Handicraft Artisan\", requiredSkills: [\"Handicrafts\", \"Weaving\"], location: \"Any\", category: \"Arts & Crafts\" }, { title: \"Tailor\", requiredSkills: [\"Tailoring\", \"Stitching\"], location: \"Any\", category: \"Arts & Crafts\" }, { title: \"Local Artist / Painter\", requiredSkills: [\"Painting\", \"Art\"], location: \"Any\", category: \"Arts\" }, // Domestic/Service \n  { title: \"Domestic Help\", requiredSkills: [\"Housekeeping\", \"Cooking\"], location: \"Any\", category: \"Domestic Service\" }, { title: \"Cook / Kitchen Helper\", requiredSkills: [\"Cooking\", \"Food prep\"], location: \"Any\", category: \"Hospitality\" }, { title: \"Driver\", requiredSkills: [\"Driving\", \"Vehicle license\"], location: \"Any\", category: \"Transport\" }, // Retail/Small Business \n  { title: \"Shop Assistant\", requiredSkills: [\"Communication\", \"Basic math\"], location: \"Any\", category: \"Retail\" }, { title: \"Street Vendor Support\", requiredSkills: [\"Sales\", \"Communication\"], location: \"Any\", category: \"Retail\" }, // IT/Office (keep some, just not the only category) \n  { title: \"Data Entry Operator\", requiredSkills: [\"MS Excel\", \"Typing\"], location: \"Any\", category: \"Admin\" }, { title: \"IT Support Executive\", requiredSkills: [\"Basic Computer\", \"Networking basics\"], location: \"Any\", category: \"IT Support\" }, // Education/Community \n  { title: \"Teaching Assistant\", requiredSkills: [\"Teaching\", \"Communication\"], location: \"Any\", category: \"Education\" }, { title: \"Community Health Worker\", requiredSkills: [\"Communication\", \"Basic health knowledge\"], location: \"Rural\", category: \"Healthcare\" },\n// History/Heritage/Research\n  { title: \"Museum Guide\", requiredSkills: [\"History\", \"Communication\"], location: \"Any\", category: \"History & Heritage\" },\n  { title: \"Heritage Site Assistant\", requiredSkills: [\"History\", \"Tourism\"], location: \"Any\", category: \"History & Heritage\" },\n  { title: \"Research Assistant\", requiredSkills: [\"History\", \"Research\", \"Writing\"], location: \"Any\", category: \"Education\" },\n  { title: \"Tour Guide\", requiredSkills: [\"History\", \"Communication\", \"Local knowledge\"], location: \"Any\", category: \"Tourism\" },\n  { title: \"Archive Assistant\", requiredSkills: [\"History\", \"Documentation\"], location: \"Any\", category: \"Education\" },\n  { title: \"School Teacher (Social Studies/History)\", requiredSkills: [\"History\", \"Teaching\"], location: \"Any\", category: \"Education\" },\n  { title: \"Content Writer (History/Culture)\", requiredSkills: [\"History\", \"Writing\"], location: \"Remote\", category: \"Media & Writing\" },\n\n  // Other common informal-sector gaps\n  { title: \"Security Guard\", requiredSkills: [\"Physical fitness\", \"Alertness\"], location: \"Any\", category: \"Security\" },\n  { title: \"Delivery Executive\", requiredSkills: [\"Driving\", \"Time management\"], location: \"Any\", category: \"Transport\" },\n  { title: \"Beautician / Salon Worker\", requiredSkills: [\"Beauty services\"], location: \"Any\", category: \"Personal Care\" },\n  // Artist & Creative Sector\n  { title: \"Fine Artist / Muralist\", requiredSkills: [\"Painting\", \"Sketching\", \"Creativity\"], location: \"Any\", category: \"Arts & Culture\" },\n  { title: \"Graphic Designer / Illustrator\", requiredSkills: [\"Digital Design\", \"Photoshop\", \"Illustration\"], location: \"Any\", category: \"Arts & Culture\" },\n  { title: \"Craftsperson / Artisan\", requiredSkills: [\"Handicrafts\", \"Creative Design\"], location: \"Any\", category: \"Arts & Culture\" },\n\n  // Maths, Physics & Basic Academic Subjects\n  { title: \"Maths & Physics Tutor\", requiredSkills: [\"Mathematics\", \"Physics\", \"Teaching\"], location: \"Any\", category: \"Education\" },\n  { title: \"Lab & Research Assistant\", requiredSkills: [\"Physics\", \"Chemistry\", \"Data Entry\"], location: \"Any\", category: \"Research & Academics\" },\n  { title: \"Academic Content Writer\", requiredSkills: [\"Basic Subjects\", \"Writing\", \"Subject Expertise\"], location: \"Any\", category: \"Education\" },\n\n  // Medical & Healthcare Sector\n  { title: \"Nursing Assistant / Caregiver\", requiredSkills: [\"Patient Care\", \"Basic First Aid\", \"Empathy\"], location: \"Any\", category: \"Healthcare\" },\n  { title: \"Medical Lab Technician\", requiredSkills: [\"Sample Collection\", \"Lab Safety\"], location: \"Any\", category: \"Healthcare\" },\n  { title: \"Pharmacy Assistant\", requiredSkills: [\"Medicine Inventory\", \"Billing\", \"Customer Service\"], location: \"Any\", category: \"Healthcare\" },\n   { title: \"Surgeon\", requiredSkills: [\"Surgery\"], location: \"Any\", category: \"Healthcare\" },\n  { title: \"Healthcare Front-Desk / Admin\", requiredSkills: [\"Patient Registration\", \"Basic Computer Skills\"], location: \"Any\", category: \"Healthcare\" },\n  // Music & Audio Sector\n  { title: \"Music Tutor / Instrumental Teacher\", requiredSkills: [\"Music Theory\", \"Instrument Skills\", \"Teaching\"], location: \"Any\", category: \"Music & Audio\" },\n  { title: \"Sound Technician / Audio Engineer\", requiredSkills: [\"Audio Mixing\", \"Sound Equipment\", \"DAW Software\"], location: \"Any\", category: \"Music & Audio\" },\n  { title: \"Performing Musician / Vocalist\", requiredSkills: [\"Vocal/Instrument Mastery\", \"Stage Performance\"], location: \"Any\", category: \"Music & Audio\" },\n  { title: \"Music Producer / Beatmaker\", requiredSkills: [\"Music Production\", \"DAW Software\", \"Composition\"], location: \"Any\", category: \"Music & Audio\" },\n  { title: \"Instrument Repair Technician\", requiredSkills: [\"Instrument Tuning\", \"Maintenance\", \"Craftsmanship\"], location: \"Any\", category: \"Music & Audio\" },\n  // Electrician & Electrical Services Sector\n  { title: \"Electrician / Wireman\", requiredSkills: [\"Wiring\", \"Circuit Repair\", \"Electrical Safety\"], location: \"Any\", category: \"Skilled Trades\" },\n  { title: \"Appliance Repair Technician\", requiredSkills: [\"Troubleshooting\", \"Appliance Maintenance\", \"Basic Electronics\"], location: \"Any\", category: \"Maintenance & Repair\" },\n  { title: \"Solar Panel Installer\", requiredSkills: [\"Solar Installation\", \"Wiring\", \"Physical Fitness\"], location: \"Any\", category: \"Renewable Energy\" },\n\n  // Mechanic & Automotive Sector\n  { title: \"Auto Mechanic / Vehicle Technician\", requiredSkills: [\"Engine Diagnostics\", \"Vehicle Repair\", \"Basic Tools\"], location: \"Any\", category: \"Automotive\" },\n  { title: \"Two-Wheeler / Bike Mechanic\", requiredSkills: [\"Bike Servicing\", \"Engine Tuning\", \"Puncture Repair\"], location: \"Any\", category: \"Automotive\" },\n  { title: \"Industrial Machinery Mechanic\", requiredSkills: [\"Machinery Maintenance\", \"Hydraulics\", \"Troubleshooting\"], location: \"Any\", category: \"Maintenance & Repair\" },\n];\n\n// Pull profile data from the Profile Agent node by name\nconst profile = $('Profile Agent').first().json.output;\nconst analysis = $input.first().json.output;\n\nconst skills = profile.skills || [];\nconst categories = analysis.suitable_job_categories || [];\n\nconst scored = jobs.map(job => {\n  const skillMatches = job.requiredSkills.filter(skill =>\n    skills.some(s => s.toLowerCase().includes(skill.toLowerCase()))\n  ).length;\n  const categoryMatch = categories.some(cat =>\n    job.category.toLowerCase().includes(cat.toLowerCase()) ||\n    cat.toLowerCase().includes(job.category.toLowerCase())\n  ) ? 1 : 0;\n\n  return { ...job, matchScore: skillMatches + categoryMatch };\n});\n\nconst ranked = scored.sort((a, b) => b.matchScore - a.matchScore).slice(0, 5);\n\nreturn ranked.map(job => ({ json: job }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -656
+      ],
+      "id": "a969345f-103b-407c-a8bb-567455101ee7",
+      "name": "Job match agent old"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=User Profile:\n- Skills: {{ $json.output.skills ? $json.output.skills.join(', ') : 'Not specified' }}\n- Education Level: {{ $json.output.education_level || 'Not specified' }}\n- Interest Area: {{ $json.output.interest_area || 'Not specified' }}\n- Location: {{ $json.output.location || 'Any' }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "CRITICAL OUTPUT RULES: 1. Return raw JSON ONLY that strictly matches the parser schema. 2. Do NOT wrap the JSON output inside markdown code blocks (do NOT use ```json or ```). 3. Do NOT use double quotes (\" \") inside the string text values—use single quotes (' ') or no quotes instead. 4. Keep the resume text as standard plain text with simple newlines (\\n)."
+            },
+            {
+              "message": "=You are an expert career counselor.  Analyze the user's profile and dynamically generate 3 to 5 realistic, highly relevant job roles tailored to their exact skills, education, and interest area.  User Profile: - Skills: {{ $json.skills ? $json.skills.join(', ') : 'Not specified' }} - Education Level: {{ $json.education_level || 'Not specified' }} - Interest Area: {{ $json.interest_area || 'Not specified' }} - Location: {{ $json.location || 'Any' }}  Rules: 1. Handle ANY sector dynamically (Art, Science, Medical, Trades, Farming, Tech, Music, etc.). 2. Output raw JSON array matching the schema provided by the parser. 3. Do NOT wrap output in markdown code blocks like ```json."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        944,
+        -256
+      ],
+      "id": "906c397a-3e3c-4860-87db-9c82fc4c656b",
+      "name": "Job match agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"resume_summary\": \"Highly motivated individual with 4 years of experience in Maths, seeking to leverage strong analytical skills in a challenging role.\",\n  \"full_resume\": \"Riya\\nUnderGraduate\\n4 years of experience\\nLocation: MP\\n\\nSkills:\\n- Maths\\n\\nExperience:\\n- 4 years of experience in maths related roles\\n- Strong understanding of mathematical concepts and principles\\n\\nEducation:\\n- UnderGraduate degree in a relevant field\",\n  \"cover_letter\": \"Dear Hiring Manager,\\nI am excited to apply for the Research Assistant - Maths role, and I am confident that my skills and experience make me an ideal candidate for the position.\\nWith 4 years of experience and a strong background in Maths, I possess a deep understanding of mathematical concepts and principles.\\nThank you for considering my application.\\n\\nSincerely,\\nRiya\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1904,
+        -256
+      ],
+      "id": "d0674b86-9e4b-4601-af55-1da3486fd6e8",
+      "name": "Structured Output Parser4",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert ATS resume writer. \nGenerate a tailored resume , and cover letter based on the incoming candidate profile, job matches, and skill gap data:\n\nCandidate Profile:\nName: {{ $json.profile.name }}\nEducation: {{ $json.profile.education_level }}\nSkills: {{ $json.profile.skills.join(', ') }}\nExperience: {{ $json.profile.experience_years }} years\nLocation: {{ $json.profile.location }}\n\nTarget Job: {{ $json.targetJob.title }} ({{ $json.targetJob.category }})\nRequired Skills: {{ $json.targetJob.requiredSkills.join(', ') }}\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=CRITICAL OUTPUT RULES: 1. Return raw JSON ONLY that strictly matches the parser schema. 2. Do NOT wrap the JSON output inside markdown code blocks (do NOT use ```json or ```). 3. Do NOT use double quotes (\" \") inside the string text values—use single quotes (' ') or no quotes instead. 4. Keep the resume text as standard plain text with simple newlines (\\n).\n5. Inside the full_resume and cover_letter string values, use \\n for line breaks — never insert literal newlines. Ensure the final output is valid, parseable JSON with all quotes properly escaped.\n6. Return the JSON with resume_summary, full_resume, and cover_letter as TOP-LEVEL keys. Do NOT nest them inside an \"output\" wrapper object or any other key. Correct: {\"resume_summary\": \"...\", \"full_resume\": \"...\", \"cover_letter\": \"...\"}. Incorrect: {\"output\": {\"resume_summary\": \"...\"}}."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1760,
+        -64
+      ],
+      "id": "fc97d967-caf0-4d69-bcc6-3b6ab73aa0e0",
+      "name": "Resume Agent"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        -480
+      ],
+      "id": "e36b7749-8f4d-4119-8e7b-8e11985f2960",
+      "name": "Wait",
+      "webhookId": "036602c0-4dea-48a9-b2c0-3c37effb63c3"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -192,
+        -448
+      ],
+      "id": "5c5f533d-7607-46cf-bdb4-0594df5fce6a",
+      "name": "Wait1",
+      "webhookId": "4a02d0b6-3f72-41c5-a706-092b4e598adc"
+    },
+    {
+      "parameters": {
+        "amount": 7
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        -448
+      ],
+      "id": "ff0ec6c1-5418-4a42-986f-ff2e928b483f",
+      "name": "Wait2",
+      "webhookId": "dbbcb2f5-02f2-47b5-a466-af223bd56bbf"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        160
+      ],
+      "id": "5697b68b-5b1d-4f73-a48c-704b6bb744e0",
+      "name": "Wait3",
+      "webhookId": "133053b9-8e34-45f2-9b66-9c4f92c01745"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 6000,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        -320
+      ],
+      "id": "4dc3fb06-64d9-494b-a55b-0f994c0c55dc",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "RGhc2Duww8utvAeq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        832,
+        -48
+      ],
+      "id": "1dac4514-73af-4856-bd1c-30c69292c8aa",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "RGhc2Duww8utvAeq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 3000,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        336,
+        -48
+      ],
+      "id": "86b58de5-a9a9-4105-b208-e2ae325c3492",
+      "name": "Mistral Cloud Chat Model2",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "RGhc2Duww8utvAeq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -48
+      ],
+      "id": "696cc536-970a-4c12-a7c3-68c5d508dcdf",
+      "name": "Mistral Cloud Chat Model3",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "RGhc2Duww8utvAeq",
+          "name": "Mistral Cloud account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Profile Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analysis Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profile Agent": {
+      "main": [
+        [
+          {
+            "node": "debug node 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analysis Agent": {
+      "main": [
+        [
+          {
+            "node": "debug node 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "debug node 1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "debug node 2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skill gap agent": {
+      "main": [
+        [
+          {
+            "node": "Combine agent data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheme match agent": {
+      "main": [
+        [
+          {
+            "node": "Skill gap agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine agent data": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate dashboard": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Job match agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job match agent old": {
+      "main": [
+        []
+      ]
+    },
+    "Job match agent": {
+      "main": [
+        [
+          {
+            "node": "Scheme match agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Resume Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Agent": {
+      "main": [
+        [
+          {
+            "node": "Generate dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Analysis Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Profile Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Job match agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Resume Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resume Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Job match agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analysis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Profile Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ad13cb06-66dc-45f0-a879-8c39e0af08e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "161c263fde36c908314ce2fa535d9d168dd0bd14ef095f8394650a3131f043be"
+  },
+  "nodeGroups": [],
+  "id": "wiOscOzSB5mz4BuG",
+  "tags": []
+}
